@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cinematic Illusions Widget</title>
+    <style>
+        :root {
+            --bg-color: #1e1e2f;
+            --panel-bg: #2a2a40;
+            --text-color: #f0f0f5;
+            --accent: #ff4757;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1, h2 { text-align: center; }
+        .widget-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            max-width: 900px;
+            width: 100%;
+            justify-content: center;
+        }
+        .panel {
+            background-color: var(--panel-bg);
+            border-radius: 10px;
+            padding: 20px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        /* Forced Perspective CSS */
+        .camera-view {
+            width: 100%;
+            height: 200px;
+            background: #87CEEB; /* Sky blue */
+            border: 4px solid #111;
+            border-radius: 5px;
+            position: relative;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+        .ground {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 60px;
+            background: #2e8b57; /* Grass */
+        }
+        .actor {
+            position: absolute;
+            bottom: 40px;
+            left: 25%;
+            font-size: 60px;
+            line-height: 1;
+            z-index: 2;
+            transition: transform 0.2s;
+        }
+        .prop {
+            position: absolute;
+            bottom: 50px;
+            right: 25%;
+            font-size: 60px;
+            line-height: 1;
+            z-index: 1;
+            transition: transform 0.2s, bottom 0.2s;
+        }
+        .controls {
+            width: 100%;
+            text-align: center;
+        }
+        input[type="range"] {
+            width: 80%;
+            margin: 10px 0;
+        }
+        
+        /* Substitution Splice CSS */
+        .stage-view {
+            width: 100%;
+            height: 200px;
+            background: #3a2e2e;
+            border: 4px solid #111;
+            border-radius: 5px;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 15px;
+            overflow: hidden;
+        }
+        .curtain {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #800000;
+            z-index: 10;
+            transform: translateY(-100%);
+            transition: transform 0.1s linear;
+        }
+        .magic-item {
+            font-size: 80px;
+            transition: opacity 0.1s;
+        }
+        button {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background-color: #ff6b81;
+        }
+        .flash {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: white;
+            opacity: 0;
+            pointer-events: none;
+            z-index: 5;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Cinematic Illusions</h1>
+    <p>Interactive demonstrations of pre-digital visual effects.</p>
+
+    <div class="widget-container">
+        
+        <!-- Forced Perspective Panel -->
+        <div class="panel">
+            <h2>Forced Perspective</h2>
+            <p style="font-size: 14px; text-align: center;">Move the slider to push the monster further away from the camera lens to manipulate its perceived scale.</p>
+            <div class="camera-view">
+                <div class="ground"></div>
+                <div class="actor">🚶</div>
+                <div class="prop" id="monster">🦖</div>
+            </div>
+            <div class="controls">
+                <label for="distanceSlider">Distance of Monster from Camera:</label><br>
+                <span>Close</span>
+                <input type="range" id="distanceSlider" min="1" max="100" value="1">
+                <span>Far</span>
+            </div>
+        </div>
+
+        <!-- Substitution Splice Panel -->
+        <div class="panel">
+            <h2>Substitution Splice</h2>
+            <p style="font-size: 14px; text-align: center;">Stop the camera, swap the object, and resume filming to perform a "Stop Trick".</p>
+            <div class="stage-view">
+                <div class="curtain" id="shutter"></div>
+                <div class="flash" id="flash"></div>
+                <div class="magic-item" id="magicItem">🎩</div>
+            </div>
+            <div class="controls">
+                <button id="spliceBtn">Cut Camera & Swap!</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Forced Perspective Logic
+        const slider = document.getElementById('distanceSlider');
+        const monster = document.getElementById('monster');
+
+        slider.addEventListener('input', (e) => {
+            const distance = e.target.value;
+            // As the monster gets further (distance increases):
+            // 1. It scales down (looks smaller in camera)
+            // 2. It moves slightly up visually on the 2D plane to maintain ground contact in perspective
+            const scaleValue = 1 - (distance * 0.007); 
+            const bottomValue = 50 + (distance * 0.3);
+            
+            monster.style.transform = `scale(${scaleValue})`;
+            monster.style.bottom = `${bottomValue}px`;
+            
+            // Adjust z-index so if it's "far away" it goes behind the actor
+            if (distance > 30) {
+                monster.style.zIndex = 1;
+            } else {
+                monster.style.zIndex = 3;
+            }
+        });
+
+        // Substitution Splice Logic
+        const spliceBtn = document.getElementById('spliceBtn');
+        const magicItem = document.getElementById('magicItem');
+        const shutter = document.getElementById('shutter');
+        const flash = document.getElementById('flash');
+        
+        const items = ['🎩', '🐇', '🕊️', '💐'];
+        let currentItemIndex = 0;
+
+        spliceBtn.addEventListener('click', () => {
+            spliceBtn.disabled = true;
+            
+            // 1. Simulate camera shutter/cut (black frame)
+            shutter.style.transform = 'translateY(0)';
+            
+            setTimeout(() => {
+                // 2. Swap item while "camera is off"
+                currentItemIndex = (currentItemIndex + 1) % items.length;
+                magicItem.textContent = items[currentItemIndex];
+                
+                // 3. Open shutter (resume filming)
+                shutter.style.transform = 'translateY(-100%)';
+                
+                // Add a little film flash effect
+                flash.style.opacity = '1';
+                flash.style.transition = 'none';
+                
+                setTimeout(() => {
+                    flash.style.transition = 'opacity 0.5s';
+                    flash.style.opacity = '0';
+                    spliceBtn.disabled = false;
+                }, 50);
+
+            }, 400); // Time it takes to "stop rolling and swap"
+        });
+    </script>
+</body>
+</html>
